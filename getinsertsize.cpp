@@ -83,18 +83,24 @@ double myvar(size_t *ary,aMap &asso,double mean,int maxbound){
   return sqrt(nsum/(nobs-1));
 }
 
-void myprint(size_t *ary,aMap &asso){
+void myprint(size_t *ary,aMap &asso,FILE *fp){
   for(int i=0;i<LENS;i++)
     if(ary[i])
-      fprintf(stderr,"%d\t%zu\n",i,ary[i]);
+      fprintf(fp,"%d\t%zu\n",i,ary[i]);
   for(aMap::iterator it=asso.begin();it!=asso.end();++it)
-    fprintf(stderr,"%d\t%zu\n",it->first,it->second);
+    fprintf(fp,"%d\t%zu\n",it->first,it->second);
 	
   
 
 }
 
+size_t stat[5]={0,0,0,0,0};
 
+#define unmapped 0
+#define mapped 1
+#define orphan 2
+#define paired 3
+#define used 4
 
 int main() {
   if(isatty(fileno(stdin))){
@@ -106,26 +112,65 @@ int main() {
   memset(span,0,sizeof(size_t)*LENS);
   char *buf = new char[LENS];
   char **toks = new char*[12];
+  size_t nreads=0;
   while(fgets(buf,LENS,stdin)){
+    nreads++;
+    //    fprintf(stderr,"buf:%s\n",buf);
     toks[0] = strtok(buf,"\n\t ");
-    int i;
-    for(i=1;i<12;i++){
+    for(int i=1;i<12;i++){
       toks[i] = strtok(NULL,"\n\t ");
     }
+    
+    int flag = atoi(toks[1]);
+    if(flag &4){
+      //      fprintf(stderr,"Read unmapped \'%s\'\n",toks[1]);
+      stat[unmapped]++;
+      continue;
+    }else
+      stat[mapped]++;
+
+
+    if(!(flag&1)){//check if odd
+      fprintf(stderr,"Alignment record must be paired \'%s\'\n",toks[1]);
+      return 0;
+    }
+
+    #if 0
+    //disregard flag column, which is only meanning full if isize has been specified in bwa mapping
+    if(!(flag & 2)){
+      stat[orphan]++;
+      continue;
+    }else
+      stat[paired]++;
+    #endif
+    
+    if(flag&8){
+      stat[orphan]++;
+      continue;
+    }else
+      stat[paired]++;
+
+    
+
     char *cig = toks[5];
     const char *tmp = "IDNSHP=X";
     int cont=1;
     for(unsigned i=0;cont&&i<strlen(tmp);i++)
       if(strchr(cig,tmp[i]))
 	cont =0;
-    if(cont==0)
+    if(cont==0){
+      //   fprintf(stderr,"Unperfect match: \'%s\'\n",cig);
       continue;
+    }
+    if(toks[6][0]!='=')
+      continue;
+    stat[used]++;
+
     //    fprintf(stderr,"Perfect Match:%s\n",cig);
     char *tok = strchr(cig,'M');
     assert(tok);
     *tok = '\0';
     int len = atoi(cig);
-    //    fprintf(stderr,"mlen:%d\n",len);
     if(len<LENS-10)
       rlen[len]++;
     else
@@ -145,18 +190,27 @@ int main() {
       myIns(len,span_map);
     
   }
-#if 0
-  myprint(span,span_map);
-  myprint(rlen,rlen_map);
+  FILE *fp = stdout;
+  fprintf(fp,"\"nReads(total number):\"%zu\n",nreads);
+  fprintf(fp,"\"unmapped(flag not 4):\"%zu\n",stat[0]);
+  fprintf(fp,"\"mapped(flag 4):\"%zu\n",stat[1]);
+  fprintf(fp,"\"orphan(flag 8):\"%zu\n",stat[2]);
+  fprintf(fp,"\"paired(flag not 8):\"%zu\n",stat[3]);
+  fprintf(fp,"\"used(same chr and mate mapped):\"%zu\n",stat[4]);
+#if 1
+  fprintf(stdout,"#insertsizes len count");
+  myprint(span,span_map,stdout);
+  fprintf(stdout,"#rlen len count");
+  myprint(rlen,rlen_map,stdout);
 #endif
   double mea = mymean(rlen,rlen_map,-1);
   double var = myvar(rlen,rlen_map,mea,-1);
-  fprintf(stdout,"Read length mean:%f\t sqrt(var):%f\n",mea,var);
+  //  fprintf(stdout,"Read length mean:%f\t sqrt(var):%f\n",mea,var);
 
   int pivot = whichmax(span,span_map);
   mea = mymean(span,span_map,3*pivot);
   var = myvar(span,span_map,mea,3*pivot);
-  fprintf(stdout,"Read span mean:%f\t sqrt(var):%f\n",mea,var);
+  //fprintf(stdout,"Read span mean:%f\t sqrt(var):%f\n",mea,var);
   
   //cleanup
   delete [] rlen;
