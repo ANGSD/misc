@@ -33,9 +33,9 @@ unsigned char **readbed(const char* file, int nrow,int ncol) {
   /* Create output object */
 
   
-  unsigned char** results = calloc(nrow,sizeof(unsigned char*));
+  unsigned char** results =(unsigned char**) calloc(nrow,sizeof(unsigned char*));
   for(i=0;i<nrow;i++)
-    results[i] = calloc(ncol,sizeof(unsigned char));
+    results[i] =(unsigned char*) calloc(ncol,sizeof(unsigned char));
 
   /* Read in data */
 
@@ -108,7 +108,7 @@ int main(int argc,char **argv){
     fprintf(stderr,"Supply prefix for plink binary files\n");
     return 0;
   }
-  char *fname = malloc(strlen(argv[1])+5);
+  char *fname =(char*) malloc(strlen(argv[1])+5);
   strcpy(fname,argv[1]);strcpy(fname+strlen(fname),".bim");
   int ncol = nlines(fname);
   
@@ -118,8 +118,9 @@ int main(int argc,char **argv){
   if(ncol==0||nrow==0)
     return 0;
   fprintf(stderr,"ncol:%d\tnrow:%d\n",ncol,nrow);
-  unsigned char **dat = readbed("cleanDatDK.bed",nrow,ncol);
-#if 1
+  strcpy(fname+strlen(argv[1]),".bed");
+  unsigned char **dat = readbed(fname,nrow,ncol);
+#if 0
   for(i=0;i<ncol;i++){
     for(j=0;j<nrow;j++)
       fprintf(stdout,"%d ",dat[j][i]);
