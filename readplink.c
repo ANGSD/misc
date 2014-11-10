@@ -17,7 +17,7 @@ unsigned char **readbed(const char* file, int nrow,int ncol) {
 
   FILE *in = fopen(file, "r");
   if (!in){
-    fprintf(stderr,"Couldn't open input file: %s", file);
+    fprintf(stderr,"Couldn't open input file: %s\n", file);
     exit(0);
   }
   unsigned char start[3];
@@ -101,6 +101,34 @@ int nlines(const char *fname){
   return n;
 }
 
+typedef struct{
+  size_t x;
+  size_t y;
+  unsigned char **d;
+}plink;
+
+plink *readplink(char *str){
+  plink *p =(plink*) malloc(sizeof( plink));
+
+  char *fname =(char*) malloc(strlen(str)+5);
+  strcpy(fname,str);strcpy(fname+strlen(fname),".bim");
+  int ncol = nlines(fname);
+  
+  strcpy(fname+strlen(str),".fam");
+  int nrow = nlines(fname);
+
+  if(ncol==0||nrow==0)
+    return 0;
+  fprintf(stderr,"ncol:%d\tnrow:%d\n",ncol,nrow);
+  strcpy(fname+strlen(str),".bed");
+  unsigned char **dat = readbed(fname,nrow,ncol);
+  p->x=nrow;p->y=ncol;
+  p->d=dat;
+  return p;
+}
+
+
+#ifdef __WITH_MAIN__
 
 int main(int argc,char **argv){
   int i,j;
@@ -120,7 +148,7 @@ int main(int argc,char **argv){
   fprintf(stderr,"ncol:%d\tnrow:%d\n",ncol,nrow);
   strcpy(fname+strlen(argv[1]),".bed");
   unsigned char **dat = readbed(fname,nrow,ncol);
-#if 0
+#if 1
   for(i=0;i<ncol;i++){
     for(j=0;j<nrow;j++)
       fprintf(stdout,"%d ",dat[j][i]);
@@ -134,3 +162,4 @@ int main(int argc,char **argv){
   free(fname);
   return 0;
 }
+#endif
