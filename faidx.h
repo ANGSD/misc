@@ -84,7 +84,7 @@ extern "C" {
 	/*!
 	  @abstract    Fetch the sequence in a region.
 	  @param  fai  Pointer to the faidx_t struct
-	  @param  c_name Region name
+  @param  c_name Region name
 	  @param  p_beg_i  Beginning position number (zero-based)
 	  @param  p_end_i  End position number (zero-based)
 	  @param  len  Length of the region
@@ -94,7 +94,7 @@ extern "C" {
 	  and should be destroyed by end users by calling free() on it.
 	 */
 	char *faidx_fetch_seq(const faidx_t *fai, char *c_name, int p_beg_i, int p_end_i, int *len);
-
+  char** getnam(faidx_t *fai,int *nItems);
 #ifdef __cplusplus
 }
 #endif

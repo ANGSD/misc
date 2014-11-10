@@ -47,7 +47,7 @@ perFasta *init( char *fname){
 
 
 char *loadChr(perFasta *f, char*chrName,int chrId){
-  //  fprintf(stderr,"[%s] \t->loading chr:%s from faidx=%p curchr=%d\n",__FUNCTION__,chrName,f,f->curChr);
+  fprintf(stderr,"[%s] \t->loading chr:%s from faidx=%p curchr=%d\n",__FUNCTION__,chrName,f,f->curChr);
   free(f->seqs);
   f->seqs=NULL;
   //fprintf(stderr,"f->curChr=%d chrId=%d\n",f->curChr,chrId);
@@ -66,17 +66,20 @@ char *loadChr(perFasta *f, char*chrName,int chrId){
 
 int main(int argc,char **argv){
   perFasta **fs = new perFasta*[argc-1];
-  for(int i=1;i<argc;i++)
+  for(int i=1;i<argc;i++){
     fs[i-1] = init(argv[i]);
+  }
+  int nit=0;
+  char **chr=getnam(fs[0]->fai,&nit);
+
   fprintf(stdout,"chr\tpos");
   for(int i=1;i<argc;i++)
     fprintf(stdout,"\t%s",basename(argv[i]));
   fprintf(stdout,"\n");
-  char buf[100];
-  for(int i=1;i<=22;i++){
-    snprintf(buf,100,"%d",i);
+
+  for(int i=0;i<nit;i++){
     for(int j=0;j<argc-1;j++)
-      loadChr(fs[j],buf,i);
+      loadChr(fs[j],chr[i],i);
     for(int j=1;j<argc-1;j++)
       assert(fs[0]->chrLen==fs[j]->chrLen);
     for(int j=0;j<fs[0]->chrLen;j++){
@@ -90,7 +93,7 @@ int main(int argc,char **argv){
 	  break;
 	}
       if(skip==0){
-	fprintf(stdout,"%s\t%d",buf,j);
+	fprintf(stdout,"%s\t%d",chr[i],j);
 	for(int f=0;f<argc-1;f++)
 	  fprintf(stdout,"\t%c",toupper(fs[f]->seqs[j]));
 	fprintf(stdout,"\n");

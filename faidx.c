@@ -432,3 +432,9 @@ char *faidx_fetch_seq(const faidx_t *fai, char *c_name, int p_beg_i, int p_end_i
 #ifdef FAIDX_MAIN
 int main(int argc, char *argv[]) { return faidx_main(argc, argv); }
 #endif
+
+char **getnam(faidx_t *fai,int *n){
+  *n=fai->n;
+  return fai->name;
+
+}
